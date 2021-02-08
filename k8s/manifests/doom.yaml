@@ -1,0 +1,10 @@
+apiVersion: retro.sparkfabrik.com/v1
+kind: Game
+metadata:
+  name: doom
+  namespace: games
+spec:
+  name: "Doom"
+  zipUrl: "https://aksapptest.blob.ppe1.stackpoc.com/dosbox/DOSBOX_DOOM.ZIP"
+  dir: "."
+  exe: "DOOM.EXE"

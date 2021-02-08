@@ -1,0 +1,147 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: games
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: games.retro.sparkfabrik.com
+spec:
+  group: retro.sparkfabrik.com
+  names:
+    kind: Game
+    plural: games
+    shortNames:
+    - gm
+    singular: game
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The game name
+      jsonPath: .spec.name
+      name: Game name
+      type: string
+    - description: The zip url of this game
+      jsonPath: .spec.zipUrl
+      name: GSURL
+      type: string
+    - description: The game status
+      jsonPath: .status.gameState
+      name: status
+      type: string
+    - description: Age
+      jsonPath: .metadata.creationTimestamp
+      name: age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            properties:
+              dir:
+                type: string
+              exe:
+                type: string
+              name:
+                type: string
+              zipUrl:
+                type: string
+            required:
+            - name
+            - zipUrl
+            - dir
+            - exe
+            type: object
+          status:
+            description: GameStatus defines the observed state of Game
+            properties:
+              gameState:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: game-controller-service-account
+  namespace: games
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: role-game-controller
+rules:
+- apiGroups:
+  - retro.sparkfabrik.com
+  resources:
+  - games
+  - games/status
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - events
+  - services
+  verbs:
+  - '*'
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - '*'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: role-game-controller-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: role-game-controller
+subjects:
+- kind: ServiceAccount
+  name: game-controller-service-account
+  namespace: games
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: game-controller
+  name: game-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: game-controller
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: game-controller
+    spec:
+      containers:
+      - image: paolomainardi/additronk8s-game-controller
+        name: additronk8s-game-controller
+      serviceAccount: game-controller-service-account
+---
+apiVersion: retro.sparkfabrik.com/v1
+kind: Game
+metadata:
+  name: doom
+  namespace: games
+spec:
+  dir: .
+  exe: DOOM.EXE
+  name: Doom
+  zipUrl: https://aksapptest.blob.ppe1.stackpoc.com/dosbox/DOSBOX_DOOM.ZIP

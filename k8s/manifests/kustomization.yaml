@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yml
+  - crd-game-controller.yml
+  - game-controller-sa.yml
+  - game-controller-cluster-role.yml
+  - game-controller-cluster-role-binding.yml
+  - game-controller.yaml
+  - doom.yaml
+  
